@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" data-character="shazan">
+  <defs>
+    <!-- Full avatar clip -->
+    <clipPath id="sh-full">
+      <rect width="1024" height="1024" rx="90" ry="90"/>
+    </clipPath>
+    <!-- Clip: clipboard + lower arm region -->
+    <clipPath id="sh-clip-board">
+      <rect x="30" y="568" width="340" height="400"/>
+    </clipPath>
+    <!-- Warm face glow gradient -->
+    <radialGradient id="sh-face-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#FFD580" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FFD580" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      /* === Clipboard arm gentle sway === */
+      .sh-board {
+        transform-origin: 210px 580px;
+        animation: shBoardSway 4s ease-in-out infinite;
+      }
+      @keyframes shBoardSway {
+        0%, 100% { transform: rotate(0deg)   translateY(0px); }
+        25%       { transform: rotate(-7deg)  translateY(-18px); }
+        60%       { transform: rotate(-5deg)  translateY(-12px); }
+        80%       { transform: rotate(-8deg)  translateY(-20px); }
+        92%       { transform: rotate(-2deg)  translateY(-5px); }
+      }
+
+      /* === Warm face glow (smile) === */
+      .sh-glow {
+        animation: shGlowFade 4s ease-in-out infinite;
+      }
+      @keyframes shGlowFade {
+        0%, 20%  { opacity: 0; }
+        35%, 75% { opacity: 1; }
+        90%,100% { opacity: 0; }
+      }
+
+      /* === Checkmark pop on clipboard === */
+      .sh-tick {
+        transform-origin: 192px 760px;
+        animation: shTickPop 4s ease-in-out infinite;
+      }
+      @keyframes shTickPop {
+        0%, 28%  { opacity: 0; transform: scale(0.3); }
+        42%, 76% { opacity: 1; transform: scale(1); }
+        88%,100% { opacity: 0; transform: scale(0.3); }
+      }
+
+      /* === Mountain shimmer sweep === */
+      .sh-shimmer {
+        animation: shShimmer 6s linear infinite;
+      }
+      @keyframes shShimmer {
+        0%   { transform: translateX(-200px); opacity: 0; }
+        20%  { opacity: 0.18; }
+        80%  { opacity: 0.18; }
+        100% { transform: translateX(1200px); opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <!-- ── BASE LAYER: full PNG ── -->
+  <image href="shazan.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#sh-full)" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── ANIMATED: clipboard arm sway ── -->
+  <image href="shazan.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#sh-clip-board)" class="sh-board"
+         preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── OVERLAY: warm smile face glow ── -->
+  <ellipse class="sh-glow" cx="508" cy="430" rx="160" ry="110"
+           fill="url(#sh-face-glow)" clip-path="url(#sh-full)"/>
+
+  <!-- ── OVERLAY: checkmark pop on clipboard ── -->
+  <g class="sh-tick" clip-path="url(#sh-full)">
+    <circle cx="192" cy="760" r="38" fill="#3CB87A" stroke="white" stroke-width="5"/>
+    <path d="M172,760 L186,776 L214,744"
+          stroke="white" stroke-width="7" fill="none"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+
+
+  <!-- ── SHIMMER: light sweep across mountains ── -->
+  <rect class="sh-shimmer"
+        x="-80" y="420" width="160" height="600"
+        fill="white" opacity="0" clip-path="url(#sh-full)"
+        transform="skewX(-20)"/>
+</svg>

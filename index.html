@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basecamp Ledger — Kareri Lake Trek Expense Tracker</title>
+    <meta name="description" content="Real-time shared expense splitting for a 5-person Himalayan trek to Kareri Lake. Track, split, and settle expenses with your crew.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Mist Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Seasonal Kareri Lake Doodle -->
+    <div class="doodle-container" id="doodle-container">
+        <div class="doodle-label">
+            <span class="doodle-season-text" id="doodle-season-text">Winter</span>
+            <span class="doodle-loc">Kareri Lake</span>
+        </div>
+        <!-- 4 SVG scenes injected by JS -->
+    </div>
+
+    <!-- Mountain Ridges -->
+    <div class="mountains">
+        <svg class="ridge ridge-3" viewBox="0 0 1200 300" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="ridge3Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#B8D4E0"/>
+                    <stop offset="50%" stop-color="#7A8A82"/>
+                    <stop offset="100%" stop-color="#B8D4E0"/>
+                </linearGradient>
+            </defs>
+            <path d="M0,180 Q150,60 300,140 T600,100 T900,150 T1200,120 L1200,300 L0,300Z" fill="url(#ridge3Grad)" opacity="0.2"/>
+        </svg>
+        <svg class="ridge ridge-2" viewBox="0 0 1200 300" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="ridge2Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#6B8E4E"/>
+                    <stop offset="50%" stop-color="#4A5D56"/>
+                    <stop offset="100%" stop-color="#6B8E4E"/>
+                </linearGradient>
+            </defs>
+            <path d="M0,200 Q100,100 250,160 T500,130 T750,170 T1000,140 T1200,180 L1200,300 L0,300Z" fill="url(#ridge2Grad)" opacity="0.35"/>
+        </svg>
+        <svg class="ridge ridge-1" viewBox="0 0 1200 300" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="ridge1Grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#6B8E4E"/>
+                    <stop offset="30%" stop-color="#8FAC6D"/>
+                    <stop offset="70%" stop-color="#6B8E4E"/>
+                    <stop offset="100%" stop-color="#4A5D56"/>
+                </linearGradient>
+            </defs>
+            <path d="M0,220 Q80,140 200,190 T450,160 T700,200 T950,170 T1200,210 L1200,300 L0,300Z" fill="url(#ridge1Grad)" opacity="0.55"/>
+        </svg>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page">
+        <!-- Header -->
+        <header id="main-header">
+            <div class="header-row">
+                <div class="brand">
+                    <h1>Basecamp <span class="italic">Ledger</span></h1>
+                    <span class="subtitle">Kareri Lake, Himachal Pradesh</span>
+                </div>
+                <div class="header-right">
+                    <div class="sync-indicator" id="sync-indicator">
+                        <span class="sync-dot"></span>
+                        <span class="sync-text" id="sync-text">synced</span>
+                    </div>
+                    <button class="who" id="who-pill" title="Change identity">
+                        <div class="who-avatar" id="who-avatar"></div>
+                        <span class="who-name" id="who-name">Select</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="tabs" id="main-tabs">
+            <button class="tab active" data-view="v-home" id="tab-home">Basecamp</button>
+            <button class="tab" data-view="v-ledger" id="tab-ledger">Ledger</button>
+            <button class="tab" data-view="v-add" id="tab-add">Add Expense</button>
+            <button class="tab" data-view="v-settle" id="tab-settle">Settle Up</button>
+            <button class="tab" data-view="v-activity" id="tab-activity">Activity</button>
+        </nav>
+
+        <!-- ====== VIEW: BASECAMP ====== -->
+        <section class="view active" id="v-home">
+            <div class="grid-2">
+                <!-- Budget Ring Card -->
+                <div class="card" id="budget-card">
+                    <h3>Expedition Budget</h3>
+                    <div class="ring-container">
+                        <svg class="budget-ring" viewBox="0 0 200 200">
+                            <defs>
+                                <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#3A8A9E"/>
+                                    <stop offset="50%" stop-color="#6B8E4E"/>
+                                    <stop offset="100%" stop-color="#D4973A"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="ring-bg" cx="100" cy="100" r="78" fill="none" stroke="rgba(26,46,42,0.08)" stroke-width="12"/>
+                            <circle class="ring-fg" id="ring-fg" cx="100" cy="100" r="78" fill="none" stroke="url(#ringGrad)" stroke-width="12" stroke-linecap="round"
+                                stroke-dasharray="489.8" stroke-dashoffset="489.8" transform="rotate(-90 100 100)"/>
+                        </svg>
+                        <div class="ring-label">
+                            <span class="ring-pct" id="ring-pct">0%</span>
+                            <span class="ring-sub" id="ring-sub">of ₹50,000</span>
+                        </div>
+                    </div>
+                    <div class="budget-stats" id="budget-stats">
+                        <div class="row"><span class="label">Spent</span><span class="value mono" id="stat-spent">₹0</span></div>
+                        <div class="row"><span class="label">Remaining</span><span class="value mono" id="stat-remaining">₹50,000</span></div>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Card -->
+                <div class="card" id="category-card">
+                    <h3>Category Breakdown</h3>
+                    <div class="cat-bars" id="cat-bars">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crew Balances -->
+            <div class="card" id="crew-card">
+                <h3>Crew Balances</h3>
+                <div class="crew-grid" id="crew-grid">
+                    <!-- 5 member-cards populated by JS -->
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card" id="recent-card">
+                <h3>Recent Activity</h3>
+                <div class="activity-rows" id="recent-rows">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== VIEW: LEDGER ====== -->
+        <section class="view" id="v-ledger">
+            <div class="card">
+                <div class="card-header-row">
+                    <h3>All Expenses</h3>
+                    <div class="filters">
+                        <select id="filter-cat" class="select-sm">
+                            <option value="all">All Categories</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Stay">Stay</option>
+                            <option value="Food">Food</option>
+                            <option value="Permits">Permits</option>
+                            <option value="Gear">Gear</option>
+                            <option value="Misc">Misc</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="expense-rows" id="expense-rows">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== VIEW: ADD EXPENSE ====== -->
+        <section class="view" id="v-add">
+            <div class="card">
+                <h3 id="add-title">Record Expense</h3>
+                <form id="expense-form" autocomplete="off">
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="form-group">
+                        <label for="f-desc">Description</label>
+                        <input type="text" id="f-desc" required placeholder="e.g. Bus to Dharamshala">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-amount">Amount (₹)</label>
+                            <input type="number" id="f-amount" required min="1" step="0.01" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="f-date">Date</label>
+                            <input type="date" id="f-date" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="f-category">Category</label>
+                            <select id="f-category" required>
+                                <option value="Transport">Transport</option>
+                                <option value="Stay">Stay</option>
+                                <option value="Food">Food</option>
+                                <option value="Permits">Permits</option>
+                                <option value="Gear">Gear</option>
+                                <option value="Misc">Misc</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="f-payer">Paid By</label>
+                            <select id="f-payer" required>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Split Mode</label>
+                        <div class="split-toggles" id="split-toggles">
+                            <label class="radio-pill"><input type="radio" name="splitMode" value="equal" checked><span>Equal</span></label>
+                            <label class="radio-pill"><input type="radio" name="splitMode" value="exact"><span>Exact</span></label>
+                            <label class="radio-pill"><input type="radio" name="splitMode" value="percent"><span>%</span></label>
+                            <label class="radio-pill"><input type="radio" name="splitMode" value="shares"><span>Shares</span></label>
+                        </div>
+                    </div>
+                    <div class="split-preview" id="split-preview">
+                        <!-- Live split preview populated by JS -->
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-submit">Add Expense</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ====== VIEW: SETTLE UP ====== -->
+        <section class="view" id="v-settle">
+            <div class="card">
+                <h3>Simplified Debts</h3>
+                <p class="card-subtitle">Optimized transfers to settle all balances.</p>
+                <div class="debt-rows" id="debt-rows">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="card">
+                <h3>Record a Payment</h3>
+                <form id="settle-form" autocomplete="off">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="s-from">From</label>
+                            <select id="s-from" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="s-to">To</label>
+                            <select id="s-to" required></select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="s-amount">Amount (₹)</label>
+                            <input type="number" id="s-amount" required min="1" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="s-date">Date</label>
+                            <input type="date" id="s-date" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-settle">Record Payment</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ====== VIEW: ACTIVITY ====== -->
+        <section class="view" id="v-activity">
+            <div class="card">
+                <div class="card-header-row">
+                    <h3>Expedition Log</h3>
+                    <button class="btn-outline" id="btn-export">Export JSON</button>
+                </div>
+                <div class="activity-rows" id="activity-rows">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Identity Modal -->
+    <div class="modal-backdrop hidden" id="modal-backdrop">
+        <div class="modal" id="identity-modal">
+            <h2>Who goes there, trekker?</h2>
+            <p>Pick your identity for this expedition.</p>
+            <div class="pick-grid" id="pick-grid">
+                <!-- 5 pick cards populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Confirm Dialog -->
+    <div class="modal-backdrop hidden" id="confirm-backdrop">
+        <div class="modal confirm-modal" id="confirm-modal">
+            <h2 id="confirm-title">Confirm</h2>
+            <p id="confirm-msg">Are you sure?</p>
+            <div class="confirm-btns">
+                <button class="btn btn-outline-sm" id="confirm-cancel">Cancel</button>
+                <button class="btn btn-danger-sm" id="confirm-ok">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="doodles.js"></script>
+</body>
+</html>

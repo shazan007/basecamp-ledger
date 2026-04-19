@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" data-character="yash">
+  <defs>
+    <!-- Full avatar rounded clip -->
+    <clipPath id="yash-full">
+      <rect width="1024" height="1024" rx="90" ry="90"/>
+    </clipPath>
+    <!-- Clip: typing hands region -->
+    <clipPath id="yash-hands">
+      <rect x="100" y="748" width="480" height="155"/>
+    </clipPath>
+    <!-- Radial glow for headphone cups -->
+    <radialGradient id="yash-hp-l" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5FEFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#5FEFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="yash-hp-r" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5FEFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#5FEFFF" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      /* === Hands typing bob === */
+      .y-hands {
+        animation: yHandsBob 0.85s ease-in-out infinite alternate;
+      }
+      @keyframes yHandsBob {
+        0%   { transform: translateY(0px); }
+        100% { transform: translateY(-8px); }
+      }
+
+      /* === Laptop screen green code pulse === */
+      .y-screen {
+        animation: yScreenPulse 2.2s ease-in-out infinite;
+        mix-blend-mode: screen;
+      }
+      @keyframes yScreenPulse {
+        0%, 100% { opacity: 0.08; }
+        45%       { opacity: 0.32; }
+      }
+
+      /* === Neon flicker === */
+      .y-neon {
+        animation: yNeonFlicker 4s linear infinite;
+      }
+      @keyframes yNeonFlicker {
+        0%,100% { opacity: 0.0; }
+        5%       { opacity: 0.55; }
+        10%      { opacity: 0.05; }
+        15%      { opacity: 0.65; }
+        20%      { opacity: 0.0; }
+        55%      { opacity: 0.5; }
+        60%      { opacity: 0.1; }
+        65%      { opacity: 0.6; }
+        70%      { opacity: 0.0; }
+        90%      { opacity: 0.45; }
+        95%      { opacity: 0.0; }
+      }
+
+      /* === Headphone cup glow pulse === */
+      .y-hp {
+        animation: yHpPulse 1.8s ease-in-out infinite;
+      }
+      @keyframes yHpPulse {
+        0%, 100% { opacity: 0.15; }
+        50%       { opacity: 0.65; }
+      }
+
+      /* === Mug steam === */
+      .y-stm { animation: yStmRise 2s ease-out infinite; opacity: 0; }
+      .y-stm2 { animation-delay: 0.65s; }
+      .y-stm3 { animation-delay: 1.3s; }
+      @keyframes yStmRise {
+        0%   { transform: translateY(0)    scale(1);   opacity: 0.7; }
+        60%  { transform: translateY(-80px) scale(0.8); opacity: 0.35; }
+        100% { transform: translateY(-150px) scale(0.5); opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <!-- ── BASE LAYER: full PNG ── -->
+  <image href="yash.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#yash-full)" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── ANIMATED: typing hands bob ── -->
+  <image href="yash.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#yash-hands)" class="y-hands"
+         preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── GLOW: laptop screen green pulse ── -->
+  <rect class="y-screen" x="62" y="612" width="330" height="258"
+        rx="6" fill="#00FF77" clip-path="url(#yash-full)"/>
+
+  <!-- ── GLOW: neon sign magenta flicker ── -->
+  <rect class="y-neon" x="168" y="24" width="632" height="98"
+        rx="12" fill="#FF55CC" clip-path="url(#yash-full)"/>
+
+  <!-- ── GLOW: left headphone cup ── -->
+  <ellipse class="y-hp" cx="214" cy="344" rx="68" ry="68"
+           fill="url(#yash-hp-l)" clip-path="url(#yash-full)"/>
+
+  <!-- ── GLOW: right headphone cup ── -->
+  <ellipse class="y-hp" cx="800" cy="338" rx="70" ry="70"
+           fill="url(#yash-hp-r)" clip-path="url(#yash-full)"
+           style="animation-delay:0.4s"/>
+
+
+
+  <!-- ── STEAM: from coffee mug (right side) ── -->
+  <ellipse class="y-stm"  cx="808" cy="818" rx="14" ry="9"
+           fill="white" clip-path="url(#yash-full)"/>
+  <ellipse class="y-stm y-stm2" cx="832" cy="810" rx="11" ry="7"
+           fill="white" clip-path="url(#yash-full)"/>
+  <ellipse class="y-stm y-stm3" cx="820" cy="820" rx="12" ry="8"
+           fill="white" clip-path="url(#yash-full)"/>
+</svg>

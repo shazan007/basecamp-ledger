@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="160 160 704 704" width="1024" height="1024" data-character="kanika">
+  <defs>
+    <!-- Full avatar clip -->
+    <clipPath id="ka-full">
+      <rect x="160" y="160" width="704" height="704" rx="60" ry="60"/>
+    </clipPath>
+    <!-- Clip: binoculars ONLY — tight region around just the binoculars and hands -->
+    <clipPath id="ka-binos">
+      <rect x="200" y="600" width="530" height="380"/>
+    </clipPath>
+    <!-- Green confidence aura -->
+    <radialGradient id="ka-aura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#6EB84E" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#6EB84E" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      /* === Binoculars raise — pure vertical lift for natural look === */
+      .ka-binos {
+        animation: kaBinosRaise 4.5s ease-in-out infinite;
+      }
+      @keyframes kaBinosRaise {
+        0%, 100% { transform: translateY(0px); }
+        20%      { transform: translateY(-30px); }
+        40%      { transform: translateY(-26px); }
+        60%      { transform: translateY(-32px); }
+        80%      { transform: translateY(-14px); }
+      }
+
+      /* === Green confidence aura pulse === */
+      .ka-aura {
+        animation: kaAuraPulse 2.8s ease-in-out infinite;
+      }
+      @keyframes kaAuraPulse {
+        0%, 100% { opacity: 0.2; }
+        50%       { opacity: 0.75; }
+      }
+
+      /* === Sparkle star 1 (near binoculars right) === */
+      .ka-spark1 {
+        transform-origin: 720px 620px;
+        animation: kaSpark 2.8s ease-in-out infinite;
+      }
+      /* === Sparkle star 2 (upper left) === */
+      .ka-spark2 {
+        transform-origin: 200px 340px;
+        animation: kaSpark 2.8s ease-in-out infinite;
+        animation-delay: 1.4s;
+      }
+      @keyframes kaSpark {
+        0%, 55%, 100% { opacity: 0; transform: scale(0.3); }
+        70%, 85%       { opacity: 1; transform: scale(1.2); }
+        90%            { opacity: 0.6; transform: scale(0.8); }
+      }
+
+      /* === Mountain shimmer === */
+      .ka-shimmer {
+        animation: kaShimmer 7s linear infinite;
+      }
+      @keyframes kaShimmer {
+        0%   { transform: translateX(-250px) skewX(-15deg); opacity: 0; }
+        15%  { opacity: 0.15; }
+        85%  { opacity: 0.15; }
+        100% { transform: translateX(1300px) skewX(-15deg); opacity: 0; }
+      }
+    </style>
+  </defs>
+
+  <!-- ── BASE LAYER ── -->
+  <image href="kanika.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#ka-full)" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── ANIMATED: binoculars + arms raise (pure vertical lift) ── -->
+  <image href="kanika.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#ka-binos)" class="ka-binos"
+         preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── AURA: green confidence glow ── -->
+  <ellipse class="ka-aura" cx="512" cy="520" rx="360" ry="280"
+           fill="url(#ka-aura)" clip-path="url(#ka-full)"/>
+
+  <!-- ── SPARKLE 1: right of binoculars ── -->
+  <g class="ka-spark1" clip-path="url(#ka-full)">
+    <path d="M720,620 L726,636 L742,620 L726,604 Z" fill="#FFD700"/>
+    <line x1="712" y1="620" x2="750" y2="620" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+    <line x1="726" y1="606" x2="726" y2="634" stroke="#FFD700" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- ── SPARKLE 2: upper-left area ── -->
+  <g class="ka-spark2" clip-path="url(#ka-full)">
+    <path d="M200,340 L205,352 L218,340 L205,328 Z" fill="#E8B867"/>
+    <line x1="193" y1="340" x2="225" y2="340" stroke="#E8B867" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="205" y1="328" x2="205" y2="352" stroke="#E8B867" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+
+
+  <!-- ── SHIMMER: light sweep across mountains ── -->
+  <rect class="ka-shimmer" x="-120" y="380" width="200" height="650"
+        fill="white" opacity="0" clip-path="url(#ka-full)"/>
+</svg>

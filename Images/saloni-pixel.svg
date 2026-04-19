@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" data-character="saloni">
+  <defs>
+    <!-- Full avatar clip -->
+    <clipPath id="sa-full">
+      <rect width="1024" height="1024" rx="90" ry="90"/>
+    </clipPath>
+    <!-- Clip: mug + hands region -->
+    <clipPath id="sa-mug">
+      <rect x="190" y="640" width="450" height="300"/>
+    </clipPath>
+    <!-- Cheek glow -->
+    <radialGradient id="sa-cheek-l" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#FF8FAA" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FF8FAA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="sa-cheek-r" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#FF8FAA" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FF8FAA" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      /* === Mug + hands gentle bob === */
+      .sa-mug {
+        animation: saMugBob 2s ease-in-out infinite alternate;
+      }
+      @keyframes saMugBob {
+        0%   { transform: translateY(0px); }
+        100% { transform: translateY(-7px); }
+      }
+
+      /* === Steam particles rise from mug === */
+      .sa-stm { animation: saStmRise 2.4s ease-out infinite; opacity: 0; }
+      .sa-stm2 { animation-delay: 0.8s; }
+      .sa-stm3 { animation-delay: 1.6s; }
+      @keyframes saStmRise {
+        0%   { transform: translateY(0)     translateX(0)    scale(1);   opacity: 0.8; }
+        40%  { transform: translateY(-90px)  translateX(10px) scale(0.85); opacity: 0.5; }
+        75%  { transform: translateY(-175px) translateX(-8px) scale(0.65); opacity: 0.25; }
+        100% { transform: translateY(-250px) translateX(5px)  scale(0.4); opacity: 0; }
+      }
+
+      /* === Rosy cheek pulse === */
+      .sa-cheek {
+        animation: saCheekPulse 3s ease-in-out infinite;
+      }
+      @keyframes saCheekPulse {
+        0%, 100% { opacity: 0.3; }
+        50%       { opacity: 0.75; }
+      }
+
+      /* === Sunset sky shimmer === */
+      .sa-sky {
+        animation: saSkyShimmer 8s ease-in-out infinite;
+      }
+      @keyframes saSkyShimmer {
+        0%, 100% { opacity: 0; }
+        50%       { opacity: 0.12; }
+      }
+    </style>
+  </defs>
+
+  <!-- ── BASE LAYER ── -->
+  <image href="saloni.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#sa-full)" preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── ANIMATED: mug + hands bob ── -->
+  <image href="saloni.png" x="0" y="0" width="1024" height="1024"
+         clip-path="url(#sa-mug)" class="sa-mug"
+         preserveAspectRatio="xMidYMid meet"/>
+
+  <!-- ── STEAM: rising from mug top ── -->
+  <ellipse class="sa-stm"  cx="390" cy="648" rx="18" ry="12"
+           fill="white" clip-path="url(#sa-full)"/>
+  <ellipse class="sa-stm sa-stm2" cx="422" cy="640" rx="14" ry="10"
+           fill="white" clip-path="url(#sa-full)"/>
+  <ellipse class="sa-stm sa-stm3" cx="455" cy="650" rx="16" ry="11"
+           fill="white" clip-path="url(#sa-full)"/>
+
+  <!-- ── ROSY CHEEKS ── -->
+  <ellipse class="sa-cheek" cx="295" cy="548" rx="52" ry="38"
+           fill="url(#sa-cheek-l)" clip-path="url(#sa-full)"/>
+  <ellipse class="sa-cheek" cx="725" cy="548" rx="52" ry="38"
+           fill="url(#sa-cheek-r)" clip-path="url(#sa-full)"
+           style="animation-delay:0.5s"/>
+
+  <!-- ── EYELID BLINK: LEFT EYE — amazed double-blink using SMIL ── -->
+  <!-- Eyelid rect starts at 0 height (eyes open) and grows to cover the eye -->
+  <rect x="320" y="438" width="126" height="0" rx="24" fill="#F0C090"
+        clip-path="url(#sa-full)">
+    <!-- Amazed double-blink: wide open → quick shut → open → shut → wide open -->
+    <animate attributeName="height"
+             values="0;0;0;0;0;0;0;  56;0;  56;0;  0;0"
+             keyTimes="0; 0.55; 0.60; 0.64; 0.66; 0.68; 0.72; 0.74; 0.76; 0.80; 0.82; 0.90; 1"
+             dur="3.5s" repeatCount="indefinite" calcMode="spline"
+             keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"/>
+  </rect>
+
+  <!-- ── EYELID BLINK: RIGHT EYE — same amazed pattern, tiny delay ── -->
+  <rect x="578" y="438" width="126" height="0" rx="24" fill="#F0C090"
+        clip-path="url(#sa-full)">
+    <animate attributeName="height"
+             values="0;0;0;0;0;0;0;  56;0;  56;0;  0;0"
+             keyTimes="0; 0.55; 0.60; 0.64; 0.66; 0.68; 0.72; 0.74; 0.76; 0.80; 0.82; 0.90; 1"
+             dur="3.5s" begin="0.04s" repeatCount="indefinite" calcMode="spline"
+             keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1"/>
+  </rect>
+
+  <!-- ── SKY SHIMMER (warm gradient layer) ── -->
+  <rect class="sa-sky" x="0" y="0" width="1024" height="320"
+        fill="#FFB347" clip-path="url(#sa-full)"/>
+</svg>
