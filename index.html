@@ -130,7 +130,10 @@
 
             <!-- Crew Balances -->
             <div class="card" id="crew-card">
-                <h3>Crew Balances</h3>
+                <div class="card-header-row">
+                    <h3>Crew Balances</h3>
+                    <button class="btn-outline-sm" id="btn-edit-crew" onclick="openEditCrewModal()">Edit Crew</button>
+                </div>
                 <div class="crew-grid" id="crew-grid">
                     <!-- 5 member-cards populated by JS -->
                 </div>
@@ -273,6 +276,23 @@
                 </div>
             </div>
         </section>
+    </div>
+
+    <!-- Edit Crew Modal -->
+    <div class="modal-backdrop hidden" id="edit-crew-backdrop">
+        <div class="modal" id="edit-crew-modal">
+            <h2>Edit Crew Identities</h2>
+            <p>Update member names and taglines.</p>
+            <form id="edit-crew-form" onsubmit="saveCrewEdits(event)">
+                <div id="edit-crew-list">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="confirm-btns" style="margin-top: 16px;">
+                    <button type="button" class="btn btn-outline-sm" onclick="document.getElementById('edit-crew-backdrop').classList.add('hidden')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Identity Modal -->

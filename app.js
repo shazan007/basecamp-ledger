@@ -1,5 +1,6 @@
 /* ===== BASECAMP LEDGER — app.js ===== */
-const MEMBERS=[
+let MEMBERS=[];
+const DEFAULT_MEMBERS=[
   {id:'shazan',name:'Shazan',tagline:'Budding Vlogger'},
   {id:'kanika',name:'Kanika',tagline:'Exquisite Being'},
   {id:'saloni',name:'Saloni',tagline:'Newbie to mountains'},
@@ -269,6 +270,13 @@ function save(key,data){ localStorage.setItem('kareri:'+key,JSON.stringify(data)
 function getMe(){ return localStorage.getItem('kareri:whoami') }
 function setMe(id){ localStorage.setItem('kareri:whoami',id) }
 function genId(prefix){ return prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6) }
+
+// Init MEMBERS
+MEMBERS = load('members');
+if (!MEMBERS || MEMBERS.length === 0) {
+  MEMBERS = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+  save('members', MEMBERS);
+}
 
 // Toast
 function toast(msg){
@@ -638,6 +646,37 @@ function timeAgo(ts){
 
 // Sync indicator
 function updateSync(){document.getElementById('sync-text').textContent='updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
+
+// Edit Crew Functions
+function openEditCrewModal() {
+  const container = document.getElementById('edit-crew-list');
+  container.innerHTML = MEMBERS.map(m => `
+    <div class="form-row" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px;">
+      <div class="form-group" style="width: 40%">
+        <label>Name (${m.id})</label>
+        <input type="text" id="edit-name-${m.id}" value="${m.name}" required>
+      </div>
+      <div class="form-group" style="width: 60%">
+        <label>Tagline</label>
+        <input type="text" id="edit-tagline-${m.id}" value="${m.tagline}" required>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('edit-crew-backdrop').classList.remove('hidden');
+}
+
+function saveCrewEdits(e) {
+  e.preventDefault();
+  MEMBERS.forEach(m => {
+    m.name = document.getElementById(`edit-name-${m.id}`).value.trim();
+    m.tagline = document.getElementById(`edit-tagline-${m.id}`).value.trim();
+  });
+  save('members', MEMBERS);
+  document.getElementById('edit-crew-backdrop').classList.add('hidden');
+  toast('Crew identities updated!');
+  // Quick reload to update all instances (dropdowns, cards, logs)
+  setTimeout(() => window.location.reload(), 500);
+}
 
 // ===== BOOT =====
 function boot(){
