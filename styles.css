@@ -9,6 +9,11 @@
   --card-bg:rgba(255,255,255,0.72); --card-br:rgba(26,46,42,0.10);
   --shadow:0 4px 20px rgba(31,88,102,0.08); --shadow-lg:0 10px 40px rgba(31,88,102,0.15);
   --ff-display:'Fraunces',serif; --ff-mono:'JetBrains Mono',monospace; --ff-body:'Inter',sans-serif;
+  
+  /* Mountain Day Gradients */
+  --m3-1:#B8D4E0; --m3-2:#7A8A82; --m3-3:#B8D4E0; --m3-opacity:0.2;
+  --m2-1:#6B8E4E; --m2-2:#4A5D56; --m2-3:#6B8E4E; --m2-opacity:0.35;
+  --m1-1:#6B8E4E; --m1-2:#8FAC6D; --m1-3:#6B8E4E; --m1-4:#4A5D56; --m1-opacity:0.55;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--ff-body);font-size:15px;min-height:100vh;overflow-x:hidden}
@@ -427,3 +432,69 @@ input:focus,select:focus{outline:none;border-color:var(--lake);box-shadow:0 0 0 
   .doodle-container{width:130px;height:130px;bottom:8px;right:8px;border-radius:14px}
 }
 
+/* ===== DARK MODE (Kareri Lake Starry Night) ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Background & Text overrides */
+    --bg:#0B1021; --bg-2:#162032; 
+    --ink:#F7F9FA; --ink-soft:#A0B0C0; --dim:#7A8A9E;
+    /* Neon accents */
+    --lake:#5FB0C2; --lake-2:#3A8A9E; --lake-deep:#1F5866;
+    --moss:#8FAC6D; --moss-2:#6B8E4E;
+    --amber:#F2C94C; --amber-2:#D4973A;
+    --snow:#1F2937; --snow-blue:#2D3748;
+    --rhodo:#E89AAF; --rhodo-soft:#C85A7C;
+    /* Cards and Shadows */
+    --card-bg:rgba(15,23,42,0.65); --card-br:rgba(95,176,194,0.15);
+    --shadow:0 8px 32px rgba(0,0,0,0.4); --shadow-lg:0 16px 48px rgba(0,0,0,0.6);
+    
+    /* Mountain Night Gradients */
+    --m3-1:#1A2B4C; --m3-2:#0B1021; --m3-3:#1A2B4C; --m3-opacity:0.4;
+    --m2-1:#111E36; --m2-2:#090E1A; --m2-3:#111E36; --m2-opacity:0.6;
+    --m1-1:#0B162C; --m1-2:#1F3A5A; --m1-3:#0B162C; --m1-4:#050914; --m1-opacity:0.8;
+  }
+  
+  /* Starry Sky Background */
+  body::before {
+    background: radial-gradient(ellipse 80% 60% at 20% 0%, rgba(95, 176, 194, 0.15), transparent 60%),
+                radial-gradient(ellipse 70% 50% at 85% 10%, rgba(242, 201, 76, 0.1), transparent 60%),
+                radial-gradient(ellipse 60% 40% at 50% 100%, rgba(45, 55, 72, 0.3), transparent 70%),
+                linear-gradient(180deg, #060B14 0%, #0B1021 40%, #162032 100%);
+  }
+  
+  /* Pure CSS Milky Way Stars */
+  body::after {
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    /* Create hundreds of tiny stars using box-shadows */
+    background-color: transparent;
+    opacity: 0.8;
+    box-shadow: 
+      10vw 5vh 1px #FFF, 20vw 15vh 1px #FFF, 30vw 2vh 2px #FFF, 45vw 12vh 1px #FFF, 55vw 22vh 1px #FFF, 
+      65vw 5vh 2px #FFF, 75vw 18vh 1px #FFF, 85vw 8vh 1px #FFF, 95vw 25vh 1px #FFF, 15vw 35vh 2px #FFF, 
+      25vw 45vh 1px #FFF, 35vw 30vh 1px #FFF, 50vw 40vh 1px #FFF, 60vw 32vh 2px #FFF, 70vw 48vh 1px #FFF, 
+      80vw 38vh 1px #FFF, 90vw 42vh 2px #FFF, 5vw 55vh 1px #FFF, 12vw 65vh 1px #FFF, 22vw 72vh 2px #FFF, 
+      32vw 58vh 1px #FFF, 42vw 68vh 1px #FFF, 52vw 75vh 1px #FFF, 62vw 55vh 2px #FFF, 72vw 62vh 1px #FFF, 
+      82vw 78vh 1px #FFF, 92vw 52vh 1px #FFF, 8vw 85vh 2px #FFF, 18vw 92vh 1px #FFF, 28vw 88vh 1px #FFF, 
+      38vw 95vh 1px #FFF, 48vw 82vh 2px #FFF, 58vw 98vh 1px #FFF, 68vw 85vh 1px #FFF, 78vw 90vh 1px #FFF, 
+      88vw 96vh 2px #FFF;
+    animation: starsTwinkle 8s ease-in-out infinite alternate;
+  }
+  
+  @keyframes starsTwinkle {
+    from { opacity: 0.5; transform: translateY(0); }
+    to { opacity: 0.9; transform: translateY(-5px); }
+  }
+
+  /* Specific Dark Mode overrides for better contrast */
+  .budget-ring .ring-bg { stroke: rgba(255,255,255,0.08); }
+  .tab:hover { background: rgba(255,255,255,0.05); }
+  .split-toggles { background: rgba(255,255,255,0.05); }
+  input[type="text"], input[type="number"], input[type="date"], select { background: rgba(15,23,42,0.8); color: var(--ink); border-color: rgba(95,176,194,0.3); }
+  .pick { background: rgba(15,23,42,0.8); }
+  .toast { background: var(--snow-blue); color: var(--ink); border: 1px solid var(--card-br); }
+  .member-card { background: rgba(15,23,42,0.5); }
+  
+  /* Ensure logo text is bright */
+  .brand .title { color: #FFF; }
+  .brand .subtitle { color: var(--dim); }
+}
