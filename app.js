@@ -12,59 +12,6 @@ const CAT_ICONS={Transport:'🚌',Stay:'🏕️',Food:'🍜',Permits:'📋',Gear
 const BUDGET=50000;
 const CIRC=2*Math.PI*78; // 489.8
 
-// Palettes for pixel avatars
-const PAL={
-  shazan:{k:'#1A2E2A',s:'#E8C19C',h:'#D4973A',c:'#8B5A2B',a:'#3A8A9E',g:'#F4F6F2',r:'#C85A7C'},
-  kanika:{k:'#1A2E2A',s:'#E8C19C',h:'#6B8E4E',c:'#3D5C42',a:'#1F5866',g:'#E8B867',r:'#C85A7C'},
-  saloni:{k:'#1A2E2A', p:'#F48FB1', q:'#F8BBD0', b:'#5D4037', s:'#FFE0B2', r:'#FFAB91', f:'#E53935', c:'#00BFA5', w:'#E0F2F1', m:'#6D4C41', e:'#FFFFFF', d:'#000000', h:'#F06292'},
-  anmol:{k:'#1A2E2A',s:'#E8C19C',h:'#2A2A2E',c:'#3A8A9E',a:'#D4973A',g:'#F2D2B0',r:'#C85A7C'},
-  yash:{k:'#1A2E2A',s:'#E8C19C',h:'#2A2A2E',c:'#8B5FBF',a:'#5FB0C2',g:'#E8B867',r:'#3A8A9E'}
-};
-const SPRITES={
-  shazan:[
-    '................','....kkkkkk......','...khhhhhhk.....','..khhhhhhhhk....','..khhhhhhhhhk...',
-    '..kkkssssskkk..','..kskssksskksk.','..kssssskssssk.','..ksssskkssssk.','..kkcccccccckk.',
-    '.kccckaaaakcck.','.kccakggggakck.','.kccakgkkgakck.','.kccakggggakck.','.kcckaaaaakcck.',
-    '..kk.......k...'
-  ],
-  kanika:[
-    '................','...khhhhhhk.....','..khhhhghhhk....','..khhhhhhhhhk..','..khhhhhhhhhk..',
-    '..kkkssssskkk..','..ksaaksskaaks.','..ksaggksgagks.','..ksaaksskaaks.','..ksskkkkkkssk.',
-    '..kssssssssssk.','..kccccccccckk.','.kcackccccckcck','.kcack.....ckk.','.kcack.....kk..',
-    '..kk...........'
-  ],
-  saloni:[
-    '......khhk......',
-    '.....kppppk.....',
-    '...kkpqpppqkk...',
-    '..kbbppppppbbk..',
-    '.kbbssssssssbbk.',
-    '.kbsdeessdeesbk.',
-    '.kbseesssseesbk.',
-    '..kbrssddssrbk..',
-    '...kkffffffkk...',
-    '..kcffffffffck..',
-    '.kwwfwwwwwwfwwk.',
-    '.kcwssemmeesswck.',
-    '.kcwwsmmmmswwck.',
-    '..kccmmmmmmcck..',
-    '..kwwmmmmmmwwk..',
-    '...kkkkkkkkkk...'
-  ],
-  anmol:[
-    '................','....kkkkkk......','...khhhhhhk.....','..khhhhhhhhk....','..khhhhhhhhhk..',
-    '..kkkssssskkk..','..kkkkkskkkkksk','..khkhkskhkhksk','..kssskkkksssk.','..kssssrrsssssk',
-    '..kkcccccccckk.','..kcccaaaaccck.','..kcccagggackk.','..kccaagggakck.','..kcckaggakckk.',
-    '..kkk.kkkk.kk..'
-  ],
-  yash:[
-    '................','...khhhhhhk.....','..khhhhhhhhk....','..khhhkkkhhhhk.','..khhhhhhhhhk..',
-    '..khccccccccsk.','..kcksskkssksk.','..kckgsskgsksk.','..kckkssskssssk','..kssssssssssk.',
-    '..kccccccccckk.','.kaaaaaaaaaaak.','.kaggggggggggak','.kaggkgggkgggak','.kaaaaaaaaaaak.',
-    '..k........k...'
-  ]
-};
-
 // Animated SVG avatars (PNG embedded inside SVG with CSS animation overlays)
 const AVATAR_IMGS={
   shazan:'Images/shazan-pixel.svg',
@@ -73,152 +20,6 @@ const AVATAR_IMGS={
   yash:'Images/yash-pixel.svg',
   anmol:'Images/anmol-pixel.svg'
 };
-
-// Character-specific SVG animation overlays
-function getAvatarOverlay(id,size){
-  if(size<48) return '';
-  const S='position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:10';
-
-  // Shazan — warm smile glow on face + green checkmark pops up from clipboard area
-  if(id==='shazan') return `<svg viewBox="0 0 100 100" style="${S}">
-    <defs>
-      <radialGradient id="sg" cx="50%" cy="38%" r="38%">
-        <stop offset="0%" stop-color="#FFD88A" stop-opacity="0.55"/>
-        <stop offset="100%" stop-color="#FFD88A" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <!-- warm smile glow on face, fades in while leaning forward -->
-    <ellipse cx="50" cy="38" rx="28" ry="18" fill="url(#sg)" opacity="0">
-      <animate attributeName="opacity" values="0;0;0.9;0.9;0.9;0" dur="4s" repeatCount="indefinite"/>
-    </ellipse>
-    <!-- checkmark badge pops from clipboard area -->
-    <g opacity="0">
-      <circle cx="74" cy="68" r="9" fill="#3CB87A" stroke="white" stroke-width="1.2"/>
-      <path d="M69,68 L73,72 L79,63" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <animate attributeName="opacity" values="0;0;0;1;1;1;0" dur="4s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="translate" values="0,6;0,6;0,6;0,0;0,0;0,0;0,6" dur="4s" repeatCount="indefinite"/>
-    </g>
-  </svg>`;
-
-  // Kanika — confident sparkle stars + green pro-trekker aura
-  if(id==='kanika') return `<svg viewBox="0 0 100 100" style="${S}">
-    <defs>
-      <radialGradient id="kg" cx="50%" cy="42%" r="50%">
-        <stop offset="0%" stop-color="#6B8E4E" stop-opacity="0.35"/>
-        <stop offset="100%" stop-color="#6B8E4E" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <!-- green confidence aura -->
-    <ellipse cx="50" cy="42" rx="40" ry="35" fill="url(#kg)" opacity="0">
-      <animate attributeName="opacity" values="0;0.4;0.6;0.4;0" dur="2.8s" repeatCount="indefinite"/>
-    </ellipse>
-    <!-- star sparkle 1 — near binoculars -->
-    <g opacity="0">
-      <path d="M78,48 L79.5,52 L83,48 L79.5,44 Z" fill="#FFD700"/>
-      <path d="M76,48 L83,48 M79.5,44.5 L79.5,51.5" stroke="#FFD700" stroke-width="1" stroke-linecap="round"/>
-      <animate attributeName="opacity" values="0;0;0;1;0.8;0" dur="2.8s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="scale" values="0.4;0.4;0.4;1.2;1;0.4" dur="2.8s" additive="sum" repeatCount="indefinite"/>
-    </g>
-    <!-- star sparkle 2 — offset timing -->
-    <g opacity="0">
-      <path d="M18,30 L19,33 L22,30 L19,27 Z" fill="#E8B867"/>
-      <path d="M16.5,30 L22,30 M19,27.5 L19,32.5" stroke="#E8B867" stroke-width="0.8" stroke-linecap="round"/>
-      <animate attributeName="opacity" values="0;0;0;0;1;0" dur="2.8s" begin="1.4s" repeatCount="indefinite"/>
-    </g>
-  </svg>`;
-
-  // Saloni — eyelid blink overlay on eyes + steam from mug bottom
-  if(id==='saloni') return `<svg viewBox="0 0 100 100" style="${S}">
-    <!-- LEFT eyelid — slides down over left eye area -->
-    <rect x="26" y="34" width="18" height="10" rx="5" fill="#F2C5A0" opacity="0">
-      <animate attributeName="opacity" values="0;0;0;0;1;1;0;0" dur="4s" repeatCount="indefinite"/>
-      <animate attributeName="height" values="0;0;0;0;10;10;0;0" dur="4s" repeatCount="indefinite"/>
-    </rect>
-    <!-- RIGHT eyelid -->
-    <rect x="56" y="34" width="18" height="10" rx="5" fill="#F2C5A0" opacity="0">
-      <animate attributeName="opacity" values="0;0;0;0;1;1;0;0" dur="4s" begin="0.05s" repeatCount="indefinite"/>
-      <animate attributeName="height" values="0;0;0;0;10;10;0;0" dur="4s" begin="0.05s" repeatCount="indefinite"/>
-    </rect>
-    <!-- steam puff 1 -->
-    <circle cx="40" cy="80" r="5" fill="white" opacity="0">
-      <animate attributeName="cy"      values="80;58;42"      dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0;0.75;0"      dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="r"       values="4;6;3"         dur="2s" repeatCount="indefinite"/>
-    </circle>
-    <!-- steam puff 2 (delayed) -->
-    <circle cx="50" cy="80" r="4" fill="white" opacity="0">
-      <animate attributeName="cy"      values="80;54;38"      dur="2.3s" begin="0.7s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0;0.65;0"      dur="2.3s" begin="0.7s" repeatCount="indefinite"/>
-      <animate attributeName="r"       values="3;5;2"         dur="2.3s" begin="0.7s" repeatCount="indefinite"/>
-    </circle>
-    <!-- steam puff 3 -->
-    <circle cx="60" cy="80" r="4" fill="white" opacity="0">
-      <animate attributeName="cy"      values="80;56;40"      dur="1.9s" begin="1.3s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0;0.7;0"       dur="1.9s" begin="1.3s" repeatCount="indefinite"/>
-      <animate attributeName="r"       values="3;5;2"         dur="1.9s" begin="1.3s" repeatCount="indefinite"/>
-    </circle>
-  </svg>`;
-
-  // Yash — cyan neon glow at headphone band + screen-sweep bar + music notes
-  if(id==='yash') return `<svg viewBox="0 0 100 100" style="${S}">
-    <defs>
-      <radialGradient id="nhg" cx="50%" cy="12%" r="45%">
-        <stop offset="0%" stop-color="#5FB0C2" stop-opacity="0.7"/>
-        <stop offset="100%" stop-color="#5FB0C2" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <!-- neon cyan halo at headphone arc -->
-    <ellipse cx="50" cy="12" rx="38" ry="18" fill="url(#nhg)" opacity="0">
-      <animate attributeName="opacity" values="0.15;0.7;0.15" dur="1.6s" repeatCount="indefinite"/>
-    </ellipse>
-    <!-- neon left ear-cup glow -->
-    <circle cx="16" cy="32" r="7" fill="none" stroke="#5FB0C2" stroke-width="2" opacity="0">
-      <animate attributeName="opacity" values="0.1;0.7;0.1" dur="1.6s" repeatCount="indefinite"/>
-    </circle>
-    <!-- neon right ear-cup glow -->
-    <circle cx="84" cy="32" r="7" fill="none" stroke="#5FB0C2" stroke-width="2" opacity="0">
-      <animate attributeName="opacity" values="0.1;0.7;0.1" dur="1.6s" repeatCount="indefinite"/>
-    </circle>
-    <!-- screen activity sweep bar -->
-    <rect x="22" y="74" width="56" height="4" rx="2" fill="#5FB0C2" opacity="0">
-      <animate attributeName="opacity" values="0;0.55;0" dur="2.1s" repeatCount="indefinite"/>
-      <animate attributeName="y"       values="72;80;72"  dur="2.1s" repeatCount="indefinite"/>
-    </rect>
-    <!-- music note 1 -->
-    <text x="76" y="22" font-size="11" fill="#5FB0C2" opacity="0" font-family="serif">♪
-      <animate attributeName="opacity" values="0;0;0.9;0" dur="2.5s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="translate" values="0,0;0,0;-7,-14" dur="2.5s" repeatCount="indefinite"/>
-    </text>
-    <!-- music note 2 -->
-    <text x="82" y="28" font-size="9" fill="#3A8A9E" opacity="0" font-family="serif">♫
-      <animate attributeName="opacity" values="0;0;0;0.8;0" dur="3s" begin="0.8s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="translate" values="0,0;0,0;0,0;-9,-18" dur="3s" begin="0.8s" repeatCount="indefinite"/>
-    </text>
-  </svg>`;
-
-  // Anmol — full-frame photo flash + 4-point sparkle burst at camera
-  if(id==='anmol') return `<svg viewBox="0 0 100 100" style="${S}">
-    <!-- full-frame white flash when shutter fires -->
-    <rect x="0" y="0" width="100" height="100" fill="white" rx="8" opacity="0">
-      <animate attributeName="opacity" values="0;0;0;0;0;1;0.4;0" dur="5s" repeatCount="indefinite"/>
-    </rect>
-    <!-- 4-point star burst at camera/phone position -->
-    <g opacity="0">
-      <line x1="72" y1="58" x2="72" y2="46" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="72" y2="70" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="60" y2="58" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="84" y2="58" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="64" y2="50" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="80" y2="50" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="64" y2="66" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      <line x1="72" y1="58" x2="80" y2="66" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-      <animate attributeName="opacity" values="0;0;0;0;0;0.9;0" dur="5s" repeatCount="indefinite"/>
-      <animateTransform attributeName="transform" type="scale" values="0.3;0.3;0.3;0.3;0.3;1.3;0.3" dur="5s" additive="sum" repeatCount="indefinite"/>
-    </g>
-  </svg>`;
-
-  return '';
-}
 
 // Animation CSS class per character
 const AVATAR_ANIM_CLASS={
@@ -231,42 +32,18 @@ const AVATAR_ANIM_CLASS={
 
 function renderAvatar(id,size){
   size=size||48;
-  // Use high-res image if available
-  if(AVATAR_IMGS[id]){
-    const animCls=AVATAR_ANIM_CLASS[id]||'';
-    const overlay=getAvatarOverlay(id,size);
-    return `<div class="${animCls}" style="width:100%;height:100%;position:relative;overflow:visible;">
-      <object data="${AVATAR_IMGS[id]}" type="image/svg+xml" style="width:100%;height:100%;border-radius:inherit;display:block;pointer-events:none;" aria-label="${id}"></object>
-      ${overlay}
-    </div>`;
-  }
-
-  // Fallback to pixel art (Anmol)
-  const sp=SPRITES[id], p=PAL[id]; if(!sp||!p) return '';
-  const sc=Math.max(1,Math.floor(size/16));
-  let rects='';
-  for(let y=0;y<16;y++){
-    const row=sp[y]||'';
-    for(let x=0;x<row.length;x++){
-      const ch=row[x]; if(ch==='.') continue;
-      const col=p[ch]||'#000';
-      rects+=`<rect x="${x*sc}" y="${y*sc}" width="${sc}" height="${sc}" fill="${col}"/>`;
-    }
-  }
-  let anim='';
-  const s=16*sc, h=sc;
-  if(id==='anmol'&&size>=48){
-    // Camera flash sparkle
-    anim+=`<circle cx="${12*sc}" cy="${5*sc}" r="${h*0.6}" fill="#FFF" opacity="0">
-      <animate attributeName="opacity" values="0;0;0;1;0;0" dur="5s" repeatCount="indefinite"/>
-    </circle>`;
-  }
-  return `<svg viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">${rects}${anim}</svg>`;
+  const animCls=AVATAR_ANIM_CLASS[id]||'';
+  return `<div class="${animCls}" style="width:100%;height:100%;position:relative;overflow:visible;">
+    <object data="Images/${id}-pixel.svg" type="image/svg+xml" style="width:100%;height:100%;border-radius:inherit;display:block;pointer-events:none;" aria-label="${id}"></object>
+  </div>`;
 }
 
 // Storage
 function load(key){ try{return JSON.parse(localStorage.getItem('kareri:'+key))||[]}catch(e){return[]} }
-function save(key,data){ localStorage.setItem('kareri:'+key,JSON.stringify(data)) }
+function save(key,data){ 
+  localStorage.setItem('kareri:'+key,JSON.stringify(data));
+  if(typeof getStorageHash === 'function') lastDataHash = getStorageHash();
+}
 function getMe(){ return localStorage.getItem('kareri:whoami') }
 function setMe(id){ localStorage.setItem('kareri:whoami',id) }
 function genId(prefix){ return prefix+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6) }
@@ -689,7 +466,10 @@ function saveCrewEdits(e) {
   setTimeout(() => window.location.reload(), 500);
 }
 
-// ===== BOOT =====
+// ===== BOOT & SMART SYNC =====
+let lastDataHash = '';
+function getStorageHash() { return JSON.stringify(localStorage); }
+
 function boot(){
   const me=getMe();
   if(!me){showIdentityModal();return}
@@ -701,10 +481,22 @@ function boot(){
   const activeTab=document.querySelector('.tab.active');
   renderView(activeTab?.dataset?.view||'v-home');
   updateSync();
+  lastDataHash = getStorageHash();
 }
 
 // Init
 spawnParticles();
 boot();
-// Poll every 10s
-setInterval(()=>{if(getMe()){const av=document.querySelector('.tab.active');renderView(av?.dataset?.view||'v-home');updateSync()}},10000);
+
+// Poll every 10s (Smart Sync: only re-render if data changed externally)
+setInterval(()=>{
+  if(getMe()){
+    const currentHash = getStorageHash();
+    if(currentHash !== lastDataHash) {
+      lastDataHash = currentHash;
+      const av=document.querySelector('.tab.active');
+      renderView(av?.dataset?.view||'v-home');
+      updateSync();
+    }
+  }
+}, 10000);
