@@ -38,26 +38,34 @@ function renderAvatar(id,size){
   </div>`;
 }
 
+// ====== FIREBASE SETUP ======
+const firebaseConfig = {
+  // 🔴 IMPORTANT TODO: PASTE YOUR FIREBASE CONFIG HERE 🔴
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
 // Global State & Storage
 let SERVER_STATE = { members: [], expenses: [], settlements: [], activity: [] };
-let lastDataHash = '';
-
-function getStorageHash() { return JSON.stringify(SERVER_STATE); }
 
 function load(key) { return SERVER_STATE[key] || []; }
 
 async function save(key, data) {
-  SERVER_STATE[key] = data; // Update local state immediately
-  lastDataHash = getStorageHash(); // Update hash so polling ignores this change
+  SERVER_STATE[key] = data; // Update local immediately
   try {
-    await fetch('/api/state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, data })
-    });
+    await db.ref(key).set(data);
   } catch (err) {
-    console.error("Save failed", err);
-    toast("Error saving data to server!");
+    console.error("Firebase Save Failed:", err);
+    toast("Error saving data to Firebase!");
   }
 }
 
@@ -484,35 +492,8 @@ function saveCrewEdits(e) {
   setTimeout(() => window.location.reload(), 500);
 }
 
-// ===== BOOT & SMART SYNC =====
-async function syncState() {
-  try {
-    const res = await fetch('/api/state');
-    if (!res.ok) throw new Error("API error");
-    const data = await res.json();
-    const newHash = JSON.stringify(data);
-    if (newHash !== lastDataHash) {
-      SERVER_STATE = { ...SERVER_STATE, ...data };
-      if (SERVER_STATE.members && SERVER_STATE.members.length > 0) {
-        MEMBERS = SERVER_STATE.members;
-      }
-      lastDataHash = newHash;
-      return true; // Indicates data changed
-    }
-  } catch (err) {
-    console.error("Sync failed", err);
-  }
-  return false;
-}
-
-async function boot() {
-  await syncState();
-  if (!SERVER_STATE.members || SERVER_STATE.members.length === 0) {
-    // Initialize default members if server is empty
-    await save('members', JSON.parse(JSON.stringify(DEFAULT_MEMBERS)));
-    MEMBERS = SERVER_STATE.members;
-  }
-
+// ===== BOOT & REALTIME SYNC =====
+function boot() {
   const me=getMe();
   if(!me){showIdentityModal();return}
   document.getElementById('modal-backdrop').classList.add('hidden');
@@ -529,16 +510,29 @@ async function boot() {
 
 // Init
 spawnParticles();
-boot();
 
-// Poll every 10s (Smart Sync: only re-render if data changed externally)
-setInterval(async () => {
-  if (getMe()) {
-    const changed = await syncState();
-    if (changed) {
-      const av=document.querySelector('.tab.active');
-      renderView(av?.dataset?.view||'v-home');
-      updateSync();
-    }
+// Listen to Firebase Realtime Database (Replaces 10s Polling Loop)
+db.ref().on('value', (snapshot) => {
+  const data = snapshot.val() || {};
+  SERVER_STATE = { ...SERVER_STATE, ...data };
+
+  // Handle first time initialization
+  if (!SERVER_STATE.members || SERVER_STATE.members.length === 0) {
+     const defaults = JSON.parse(JSON.stringify(DEFAULT_MEMBERS));
+     save('members', defaults);
+     MEMBERS = defaults;
+  } else {
+     MEMBERS = SERVER_STATE.members;
   }
-}, 10000);
+
+  // Only boot the UI once we have data
+  if (!window._booted) {
+    window._booted = true;
+    boot();
+  } else {
+    // If already booted, update the screen instantly with the new data
+    const activeTab = document.querySelector('.tab.active');
+    renderView(activeTab?.dataset?.view || 'v-home');
+    updateSync();
+  }
+});
