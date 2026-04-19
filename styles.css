@@ -21,9 +21,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   radial-gradient(ellipse 70% 50% at 85% 10%,rgba(232,184,103,0.25),transparent 60%),
   radial-gradient(ellipse 60% 40% at 50% 100%,rgba(95,176,194,0.2),transparent 70%),
   linear-gradient(180deg,#E8F0F2 0%,#F4F6F2 40%,#EEF0E8 100%)}
-body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.6;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-
+/* Noise removed for cleaner background */
 /* Mountains */
 .mountains{position:fixed;bottom:0;left:0;right:0;z-index:0;pointer-events:none;height:300px}
 .ridge{position:absolute;bottom:0;width:100%;height:100%}
