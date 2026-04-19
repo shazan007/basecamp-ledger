@@ -408,6 +408,14 @@ document.getElementById('settle-form').onsubmit=function(ev){
 // Activity view
 function renderActivityView(){
   const acts=load('activity');
+  const me=getMe();
+  
+  // Admin guard: only Shazan can end the trip
+  const endTripBtn = document.getElementById('btn-end-trip');
+  if (endTripBtn) {
+    endTripBtn.style.display = (me === 'shazan') ? 'inline-block' : 'none';
+  }
+
   document.getElementById('activity-rows').innerHTML=acts.length?acts.map((a,i)=>{
     const actor=MEMBERS.find(m=>m.id===a.actorId)||{name:'?',id:'shazan'};
     return `<div class="activity-row" style="animation-delay:${i*0.04}s"><div class="row-avatar">${renderAvatar(actor.id,36)}</div><div class="row-body"><div class="row-title">${actor.name} ${a.action}</div><div class="row-meta">${a.detail} · ${timeAgo(a.timestamp)}</div></div></div>`;
