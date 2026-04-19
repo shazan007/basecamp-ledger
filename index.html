@@ -269,7 +269,10 @@
             <div class="card">
                 <div class="card-header-row">
                     <h3>Expedition Log</h3>
-                    <button class="btn-outline" id="btn-export">Export JSON</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-outline" id="btn-end-trip" style="color: #E53935; border-color: rgba(229, 57, 53, 0.3);">Trip Ended</button>
+                        <button class="btn-outline" id="btn-export">Export JSON</button>
+                    </div>
                 </div>
                 <div class="activity-rows" id="activity-rows">
                     <!-- Populated by JS -->

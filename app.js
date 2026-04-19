@@ -635,6 +635,17 @@ document.getElementById('btn-export').onclick=function(){
   toast('Export downloaded!');
 };
 
+// Trip Ended
+document.getElementById('btn-end-trip').onclick = function() {
+  showConfirm('End Trip', 'Are you sure you want to permanently delete all expenses, settlements, and activity logs? This cannot be undone!', () => {
+    localStorage.removeItem('kareri:expenses');
+    localStorage.removeItem('kareri:settlements');
+    localStorage.removeItem('kareri:activity');
+    toast('Trip data reset successfully!');
+    setTimeout(() => window.location.reload(), 800);
+  });
+};
+
 // Time ago helper
 function timeAgo(ts){
   const s=Math.floor((Date.now()-ts)/1000);
