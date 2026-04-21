@@ -11,6 +11,17 @@ const CATEGORIES = ['Transport', 'Stay', 'Food', 'Permits', 'Gear', 'Misc'];
 const CAT_ICONS = { Transport: '🚌', Stay: '🏕️', Food: '🍜', Permits: '📋', Gear: '🎒', Misc: '📦' };
 const BUDGET = 50000;
 const CIRC = 2 * Math.PI * 78; // 489.8
+const RUPEE = '\u20B9';
+const REGION_TIMEZONE = 'Asia/Kolkata';
+const WEATHER_REFRESH_MS = 30 * 60 * 1000;
+const WEATHER_SYNC_CHECK_MS = 5 * 60 * 1000;
+const THEME_CHECK_MS = 60 * 1000;
+const WEATHER_LOCATIONS = [
+  { id: 'dharamshala', name: 'Dharamshala', subtitle: 'Kangra valley base', latitude: 32.2143039, longitude: 76.3196717 },
+  { id: 'kareri', name: 'Kareri Village', subtitle: 'Trek starting point', latitude: 32.2802168, longitude: 76.2802137 },
+  { id: 'kareriLake', name: 'Kareri Lake', subtitle: 'High-altitude campsite', latitude: 32.3256472, longitude: 76.2738851 }
+];
+const PREVIEW_THEME_PHASES = new Set(['day', 'dawn', 'sunset', 'night']);
 
 // Animated SVG avatars (PNG embedded inside SVG with CSS animation overlays)
 const AVATAR_IMGS = {
@@ -56,9 +67,14 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 
 // Global State & Storage
-let SERVER_STATE = { members: [], expenses: [], settlements: [], activity: [] };
+let SERVER_STATE = { members: [], expenses: [], settlements: [], activity: [], weather: null, weatherSyncLock: null };
+let WEATHER_SYNC_TIMER = null;
+let WEATHER_THEME_TIMER = null;
+let CLOCK_TIMER = null;
+let WEATHER_SYNC_IN_FLIGHT = false;
+let LAST_APPLIED_THEME = '';
 
-function load(key) { return SERVER_STATE[key] || []; }
+function load(key, fallback = []) { return SERVER_STATE[key] ?? fallback; }
 
 async function save(key, data) {
   SERVER_STATE[key] = data; // Update local immediately
@@ -73,6 +89,14 @@ async function save(key, data) {
 function getMe() { return localStorage.getItem('kareri:whoami'); }
 function setMe(id) { localStorage.setItem('kareri:whoami', id); }
 function genId(prefix) { return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6); }
+function getClientId() {
+  let clientId = localStorage.getItem('kareri:client-id');
+  if (!clientId) {
+    clientId = genId('client');
+    localStorage.setItem('kareri:client-id', clientId);
+  }
+  return clientId;
+}
 
 // Toast
 function toast(msg) {
@@ -184,10 +208,488 @@ function logActivity(actorId, action, detail) {
   save('activity', acts.slice(0, 300));
 }
 
+// ===== WEATHER =====
+function getClockText(date) {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: REGION_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).format(date || new Date());
+}
+
+function getShortClockText(date) {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: REGION_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }).format(date || new Date());
+}
+
+function getRegionNowParts(timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timeZone || REGION_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+    hour12: false
+  }).formatToParts(new Date());
+  const map = {};
+  parts.forEach((part) => {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  });
+  return {
+    dateKey: `${map.year}-${map.month}-${map.day}`,
+    minutes: Number(map.hour) * 60 + Number(map.minute),
+    seconds: Number(map.second)
+  };
+}
+
+function parseIsoClock(isoString) {
+  if (!isoString) return null;
+  const bits = isoString.split('T');
+  if (bits.length !== 2) return null;
+  const timePart = bits[1].slice(0, 5);
+  const dateKey = bits[0];
+  const [hour, minute] = timePart.split(':').map(Number);
+  return { dateKey, hour, minute, minutes: hour * 60 + minute };
+}
+
+function formatIsoClock(isoString) {
+  const parsed = parseIsoClock(isoString);
+  if (!parsed) return '--';
+  const hour12 = ((parsed.hour + 11) % 12) + 1;
+  const suffix = parsed.hour >= 12 ? 'PM' : 'AM';
+  return `${hour12}:${String(parsed.minute).padStart(2, '0')} ${suffix}`;
+}
+
+function formatDayLabel(dateKey) {
+  if (!dateKey) return '--';
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
+  return new Intl.DateTimeFormat('en-IN', { weekday: 'short', timeZone: REGION_TIMEZONE }).format(date);
+}
+
+function formatUpdatedLabel(timestamp) {
+  if (!timestamp) return 'Not synced yet';
+  return `${timeAgo(timestamp)} at ${getShortClockText(new Date(timestamp))}`;
+}
+
+function formatWeatherTemp(value) {
+  return `${Math.round(value)}&deg;C`;
+}
+
+function getPreviewThemeOverride() {
+  const params = new URLSearchParams(window.location.search);
+  const phase = params.get('themePreview');
+  if (!phase || !PREVIEW_THEME_PHASES.has(phase)) return null;
+  const tone = params.get('weatherPreview') || 'clear';
+  return {
+    phase,
+    tone,
+    label: `Preview / ${phase.charAt(0).toUpperCase() + phase.slice(1)}`,
+    basedOn: 'preview',
+    timezone: REGION_TIMEZONE,
+    updatedAt: Date.now()
+  };
+}
+
+function getWeatherCodeMeta(code, isDay) {
+  if (code === 0) return { label: 'Clear sky', shortLabel: 'Clear', icon: isDay ? '&#9728;' : '&#9790;', tone: 'clear' };
+  if ([1, 2].includes(code)) return { label: 'Partly cloudy', shortLabel: 'Partly cloudy', icon: '&#9925;', tone: 'cloudy' };
+  if (code === 3) return { label: 'Overcast', shortLabel: 'Overcast', icon: '&#9729;', tone: 'cloudy' };
+  if ([45, 48].includes(code)) return { label: 'Fog', shortLabel: 'Fog', icon: '&#127787;', tone: 'cloudy' };
+  if ([51, 53, 55, 56, 57].includes(code)) return { label: 'Drizzle', shortLabel: 'Drizzle', icon: '&#127783;', tone: 'rain' };
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { label: 'Rain', shortLabel: 'Rain', icon: '&#127783;', tone: 'rain' };
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return { label: 'Snow', shortLabel: 'Snow', icon: '&#10052;', tone: 'snow' };
+  if ([95, 96, 99].includes(code)) return { label: 'Thunderstorm', shortLabel: 'Storm', icon: '&#9889;', tone: 'storm' };
+  return { label: 'Mountain weather', shortLabel: 'Mixed', icon: '&#9925;', tone: 'cloudy' };
+}
+
+function buildThemeState(weather) {
+  const fallback = { phase: 'day', tone: 'clear', label: 'Day / Clear', basedOn: 'dharamshala', timezone: REGION_TIMEZONE, updatedAt: Date.now() };
+  if (!weather || !weather.locations) return fallback;
+  const focus = weather.locations.dharamshala || weather.locations.kareri || weather.locations.kareriLake;
+  if (!focus) return fallback;
+
+  const currentDay = getRegionNowParts(focus.timezone || REGION_TIMEZONE);
+  const todayForecast = (focus.daily || []).find((entry) => entry.date === currentDay.dateKey) || focus.daily?.[0];
+  if (!todayForecast) return fallback;
+
+  const sunrise = parseIsoClock(todayForecast.sunrise);
+  const sunset = parseIsoClock(todayForecast.sunset);
+  let phase = 'day';
+
+  if (!sunrise || !sunset) {
+    phase = focus.current?.isDay ? 'day' : 'night';
+  } else if (currentDay.minutes < sunrise.minutes - 45 || currentDay.minutes >= sunset.minutes + 35) {
+    phase = 'night';
+  } else if (currentDay.minutes < sunrise.minutes + 75) {
+    phase = 'dawn';
+  } else if (currentDay.minutes >= sunset.minutes - 75) {
+    phase = 'sunset';
+  }
+
+  const weatherMeta = getWeatherCodeMeta(focus.current?.weatherCode, focus.current?.isDay);
+  const tone = weatherMeta.tone;
+  const label = `${phase.charAt(0).toUpperCase() + phase.slice(1)} / ${weatherMeta.shortLabel}`;
+  return {
+    phase,
+    tone,
+    label,
+    basedOn: focus.id,
+    timezone: focus.timezone || REGION_TIMEZONE,
+    sunrise: todayForecast.sunrise,
+    sunset: todayForecast.sunset,
+    updatedAt: Date.now()
+  };
+}
+
+function renderBirdMarkup(variant) {
+  const birds = [
+    { top: '14%', duration: '24s', delay: '0s', scale: '0.85', drift: '-12px' },
+    { top: '18%', duration: '26s', delay: '6s', scale: '0.72', drift: '10px' },
+    { top: '24%', duration: '22s', delay: '12s', scale: '0.92', drift: '-16px' },
+    { top: '30%', duration: '28s', delay: '3s', scale: '0.68', drift: '8px' },
+    { top: '20%', duration: '30s', delay: '15s', scale: '0.58', drift: '-7px' }
+  ];
+  const birdClass = variant ? ` ${variant}` : '';
+  return birds.map((bird) => `
+    <div class="ambient-bird${birdClass}" style="--ambient-top:${bird.top};--ambient-duration:${bird.duration};--ambient-delay:${bird.delay};--ambient-scale:${bird.scale};--ambient-drift:${bird.drift};">
+      <svg viewBox="0 0 24 12" aria-hidden="true">
+        <path d="M1 8 Q6 2 12 8 Q18 2 23 8"></path>
+      </svg>
+    </div>
+  `).join('');
+}
+
+function renderSkyAmbient(theme) {
+  const ambient = document.getElementById('sky-ambient');
+  if (!ambient) return;
+
+  const phase = theme?.phase || 'day';
+  const tone = theme?.tone || 'clear';
+  let markup = '';
+
+  if (phase === 'night') {
+    markup = `
+      <div class="ambient-scene">
+        <div class="ambient-milky-way"></div>
+        <div class="ambient-moon-scene">
+          <div class="ambient-moon"></div>
+          <div class="ambient-iss">
+            <span class="iss-panel left"></span>
+            <span class="iss-arm"></span>
+            <span class="iss-core"></span>
+            <span class="iss-fin"></span>
+            <span class="iss-panel right"></span>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    const showBirds = tone !== 'storm';
+    const birdVariant = phase === 'sunset' ? ' ambient-bird-soft' : '';
+    const birds = showBirds ? `<div class="ambient-birds">${renderBirdMarkup(birdVariant.trim())}</div>` : '';
+    const sun = tone === 'clear' && phase !== 'day'
+      ? `<div class="ambient-sun ${phase === 'sunset' ? 'sunset' : 'sunrise'}"></div>`
+      : '';
+    markup = `<div class="ambient-scene">${sun}${birds}</div>`;
+  }
+
+  ambient.innerHTML = markup;
+}
+
+function applyWeatherAppearance(weather) {
+  const previewOverride = getPreviewThemeOverride();
+  const theme = previewOverride || weather?.theme || buildThemeState(weather);
+  const themeKey = `${theme.phase}:${theme.tone}`;
+  document.body.dataset.themePhase = theme.phase || 'day';
+  document.body.dataset.weatherTone = theme.tone || 'clear';
+  LAST_APPLIED_THEME = themeKey;
+  renderSkyAmbient(theme);
+
+  const badge = document.getElementById('weather-theme-badge');
+  if (badge) badge.textContent = theme.label || 'Regional weather';
+}
+
+function normalizeWeatherPayload(location, payload) {
+  const daily = (payload.daily?.time || []).map((date, index) => ({
+    date,
+    sunrise: payload.daily.sunrise?.[index] || '',
+    sunset: payload.daily.sunset?.[index] || '',
+    weatherCode: payload.daily.weather_code?.[index],
+    maxTemp: payload.daily.temperature_2m_max?.[index],
+    minTemp: payload.daily.temperature_2m_min?.[index],
+    precipChance: payload.daily.precipitation_probability_max?.[index] ?? 0
+  }));
+
+  return {
+    id: location.id,
+    name: location.name,
+    subtitle: location.subtitle,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    timezone: payload.timezone || REGION_TIMEZONE,
+    current: {
+      time: payload.current?.time || '',
+      temperature: payload.current?.temperature_2m ?? 0,
+      apparentTemperature: payload.current?.apparent_temperature ?? 0,
+      precipitation: payload.current?.precipitation ?? 0,
+      weatherCode: payload.current?.weather_code ?? 0,
+      isDay: Boolean(payload.current?.is_day),
+      windSpeed: payload.current?.wind_speed_10m ?? 0
+    },
+    daily
+  };
+}
+
+async function fetchWeatherForLocation(location) {
+  const params = new URLSearchParams({
+    latitude: String(location.latitude),
+    longitude: String(location.longitude),
+    current: 'temperature_2m,apparent_temperature,precipitation,weather_code,is_day,wind_speed_10m',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset',
+    forecast_days: '4',
+    timezone: REGION_TIMEZONE
+  });
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+  if (!response.ok) throw new Error(`Weather request failed for ${location.name}`);
+  const payload = await response.json();
+  return normalizeWeatherPayload(location, payload);
+}
+
+async function fetchWeatherBundle() {
+  const results = await Promise.all(WEATHER_LOCATIONS.map((location) => fetchWeatherForLocation(location)));
+  const locations = {};
+  results.forEach((entry) => { locations[entry.id] = entry; });
+
+  const now = Date.now();
+  const weather = {
+    source: {
+      name: 'Open-Meteo',
+      docsUrl: 'https://open-meteo.com/en/docs'
+    },
+    refreshMs: WEATHER_REFRESH_MS,
+    updatedAt: now,
+    nextRefreshAt: now + WEATHER_REFRESH_MS,
+    locations
+  };
+  weather.theme = buildThemeState(weather);
+  return weather;
+}
+
+function shouldRefreshWeather(weather) {
+  if (!weather || !weather.locations) return true;
+  if (!weather.updatedAt) return true;
+  const missingLocation = WEATHER_LOCATIONS.some((location) => !weather.locations[location.id]);
+  if (missingLocation) return true;
+  return (Date.now() - weather.updatedAt) >= WEATHER_REFRESH_MS;
+}
+
+async function acquireWeatherLock() {
+  const clientId = getClientId();
+  const now = Date.now();
+  const lockRef = db.ref('weatherSyncLock');
+  const tx = await lockRef.transaction((current) => {
+    if (current && current.expiresAt > now && current.owner !== clientId) return;
+    return { owner: clientId, acquiredAt: now, expiresAt: now + (2 * 60 * 1000) };
+  });
+  return Boolean(tx.committed && tx.snapshot?.val()?.owner === clientId);
+}
+
+async function releaseWeatherLock() {
+  try {
+    const current = load('weatherSyncLock', null);
+    if (!current || current.owner === getClientId()) {
+      await db.ref('weatherSyncLock').remove();
+    }
+  } catch (err) {
+    console.warn('Weather lock release failed', err);
+  }
+}
+
+async function syncWeatherIfNeeded(force) {
+  if (WEATHER_SYNC_IN_FLIGHT) return;
+  const currentWeather = load('weather', null);
+  if (!force && !shouldRefreshWeather(currentWeather)) return;
+
+  WEATHER_SYNC_IN_FLIGHT = true;
+  let ownsLock = false;
+  try {
+    ownsLock = await acquireWeatherLock();
+    if (!ownsLock) return;
+
+    const freshest = load('weather', null);
+    if (!force && !shouldRefreshWeather(freshest)) return;
+
+    const weatherPayload = await fetchWeatherBundle();
+    await save('weather', weatherPayload);
+  } catch (err) {
+    console.error('Weather sync failed', err);
+    if (!currentWeather) toast('Weather forecast could not be refreshed right now.');
+  } finally {
+    if (ownsLock) await releaseWeatherLock();
+    WEATHER_SYNC_IN_FLIGHT = false;
+  }
+}
+
+async function syncThemeStateIfNeeded() {
+  const previewOverride = getPreviewThemeOverride();
+  if (previewOverride) {
+    applyWeatherAppearance({ theme: previewOverride });
+    return;
+  }
+  const weather = load('weather', null);
+  if (!weather || !weather.locations) return;
+  const nextTheme = buildThemeState(weather);
+  const currentTheme = weather.theme || {};
+  const themeChanged = currentTheme.phase !== nextTheme.phase || currentTheme.tone !== nextTheme.tone || currentTheme.label !== nextTheme.label;
+  if (!themeChanged) {
+    applyWeatherAppearance(weather);
+    return;
+  }
+
+  const nextWeather = { ...weather, theme: nextTheme };
+  SERVER_STATE.weather = nextWeather;
+  applyWeatherAppearance(nextWeather);
+  if (document.querySelector('.tab.active')?.dataset.view === 'v-weather') renderWeather();
+  await save('weather', nextWeather);
+}
+
+function renderWeatherOverview(weather) {
+  const theme = weather.theme || buildThemeState(weather);
+  const focus = weather.locations[theme.basedOn] || weather.locations.dharamshala || weather.locations.kareri || weather.locations.kareriLake;
+  const focusMeta = getWeatherCodeMeta(focus.current?.weatherCode, focus.current?.isDay);
+  const nextRefresh = weather.nextRefreshAt ? getShortClockText(new Date(weather.nextRefreshAt)) : '--';
+  const updated = weather.updatedAt ? getShortClockText(new Date(weather.updatedAt)) : '--';
+  return `
+    <div class="weather-overview-card">
+      <div class="over-label">Theme Window</div>
+      <div class="over-value">${theme.label}</div>
+      <div class="over-sub">Driven by ${focus.name} and updated from stored sunrise/sunset timing.</div>
+    </div>
+    <div class="weather-overview-card">
+      <div class="over-label">Current Signal</div>
+      <div class="over-value">${focusMeta.shortLabel}</div>
+      <div class="over-sub">Latest sync at ${updated}. Next shared refresh after ${nextRefresh}.</div>
+    </div>
+    <div class="weather-overview-card">
+      <div class="over-label">Sync Mode</div>
+      <div class="over-value">30 min cache</div>
+      <div class="over-sub">One shared forecast bundle in Firebase keeps the app responsive on every client.</div>
+    </div>
+  `;
+}
+
+function renderWeatherLocationCard(location) {
+  const currentMeta = getWeatherCodeMeta(location.current.weatherCode, location.current.isDay);
+  const today = location.daily?.[0];
+  const forecastMarkup = (location.daily || []).slice(0, 4).map((entry) => {
+    const meta = getWeatherCodeMeta(entry.weatherCode, true);
+    return `
+      <div class="forecast-pill">
+        <div class="forecast-day">${formatDayLabel(entry.date)}</div>
+        <div class="forecast-icon">${meta.icon}</div>
+        <div class="forecast-range">${Math.round(entry.maxTemp)}&deg; / ${Math.round(entry.minTemp)}&deg;</div>
+        <div class="forecast-rain">${Math.round(entry.precipChance || 0)}% rain</div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <article class="weather-card">
+      <div class="weather-card-head">
+        <div>
+          <div class="weather-place">${location.name}</div>
+          <div class="weather-region">${location.subtitle}</div>
+        </div>
+        <div class="weather-icon">${currentMeta.icon}</div>
+      </div>
+      <div class="weather-current">
+        <div>
+          <div class="weather-temp">${formatWeatherTemp(location.current.temperature)}</div>
+          <div class="weather-feels">Feels like ${formatWeatherTemp(location.current.apparentTemperature)}</div>
+        </div>
+        <div class="weather-condition">${currentMeta.label}</div>
+      </div>
+      <div class="weather-stats">
+        <div class="weather-stat">
+          <div class="weather-stat-label">Today</div>
+          <div class="weather-stat-value">${today ? `${Math.round(today.maxTemp)}&deg; / ${Math.round(today.minTemp)}&deg;` : '--'}</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-label">Wind</div>
+          <div class="weather-stat-value">${Math.round(location.current.windSpeed)} km/h</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-label">Rain Risk</div>
+          <div class="weather-stat-value">${today ? `${Math.round(today.precipChance || 0)}%` : '--'}</div>
+        </div>
+        <div class="weather-stat">
+          <div class="weather-stat-label">Sun Window</div>
+          <div class="weather-stat-value">${today ? `${formatIsoClock(today.sunrise)} - ${formatIsoClock(today.sunset)}` : '--'}</div>
+        </div>
+      </div>
+      <div class="weather-forecast">${forecastMarkup}</div>
+    </article>
+  `;
+}
+
+function renderWeather() {
+  const weather = load('weather', null);
+  const overview = document.getElementById('weather-overview-grid');
+  const cards = document.getElementById('weather-location-grid');
+  const meta = document.getElementById('weather-meta');
+  const badge = document.getElementById('weather-theme-badge');
+
+  if (!weather || !weather.locations) {
+    overview.innerHTML = '<div class="weather-loading">Preparing the shared mountain forecast cache...</div>';
+    cards.innerHTML = '<div class="weather-empty">Weather cards will appear after the first successful sync.</div>';
+    meta.textContent = 'Shared forecast cache for Dharamshala, Kareri Village, and Kareri Lake.';
+    badge.textContent = 'Waiting for forecast';
+    return;
+  }
+
+  applyWeatherAppearance(weather);
+  overview.innerHTML = renderWeatherOverview(weather);
+  cards.innerHTML = WEATHER_LOCATIONS
+    .map((location) => weather.locations[location.id])
+    .filter(Boolean)
+    .map((location) => renderWeatherLocationCard(location))
+    .join('');
+  meta.textContent = `Last shared sync ${formatUpdatedLabel(weather.updatedAt)}. Forecast source: ${weather.source?.name || 'Open-Meteo'}.`;
+}
+
+function updateClock() {
+  const clock = document.getElementById('clock-time');
+  if (clock) clock.textContent = getClockText(new Date());
+}
+
+function ensureBackgroundJobs() {
+  if (!CLOCK_TIMER) {
+    updateClock();
+    CLOCK_TIMER = setInterval(updateClock, 1000);
+  }
+  if (!WEATHER_SYNC_TIMER) {
+    WEATHER_SYNC_TIMER = setInterval(() => { syncWeatherIfNeeded(false); }, WEATHER_SYNC_CHECK_MS);
+  }
+  if (!WEATHER_THEME_TIMER) {
+    WEATHER_THEME_TIMER = setInterval(() => { syncThemeStateIfNeeded(); }, THEME_CHECK_MS);
+  }
+}
+
 // ===== RENDERING =====
 function renderView(viewId) {
   const me = getMe(); if (!me) return;
   if (viewId === 'v-home') renderHome();
+  else if (viewId === 'v-weather') renderWeather();
   else if (viewId === 'v-ledger') renderLedger();
   else if (viewId === 'v-add') renderAddForm();
   else if (viewId === 'v-settle') renderSettle();
@@ -460,7 +962,7 @@ function timeAgo(ts) {
 }
 
 // Sync indicator
-function updateSync() { document.getElementById('sync-text').textContent = 'updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+function updateSync() { document.getElementById('sync-text').textContent = 'updated ' + getShortClockText(new Date()) }
 
 // Edit Crew Functions
 function openEditCrewModal() {
@@ -498,6 +1000,8 @@ function boot() {
   const me = getMe();
   if (!me) { showIdentityModal(); return }
   document.getElementById('modal-backdrop').classList.add('hidden');
+  ensureBackgroundJobs();
+  applyWeatherAppearance(load('weather', null));
 
   // Update who-pill
   document.getElementById('who-avatar').innerHTML = renderAvatar(me, 36);
@@ -507,6 +1011,8 @@ function boot() {
   const activeTab = document.querySelector('.tab.active');
   renderView(activeTab?.dataset?.view || 'v-home');
   updateSync();
+  syncThemeStateIfNeeded();
+  syncWeatherIfNeeded(false);
 }
 
 // Init
@@ -531,6 +1037,7 @@ db.ref().on('value', (snapshot) => {
     window._booted = true;
     boot();
   } else {
+    applyWeatherAppearance(load('weather', null));
     // If already booted, update the screen instantly with the new data
     const activeTab = document.querySelector('.tab.active');
     renderView(activeTab?.dataset?.view || 'v-home');

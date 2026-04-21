@@ -24,6 +24,8 @@
 <body>
     <!-- Mist Particles -->
     <div class="particles" id="particles"></div>
+    <div class="weather-overlay" id="weather-overlay" aria-hidden="true"></div>
+    <div class="sky-ambient" id="sky-ambient" aria-hidden="true"></div>
 
     <!-- Seasonal Kareri Lake Doodle -->
     <div class="doodle-container" id="doodle-container">
@@ -79,6 +81,10 @@
                     <span class="subtitle">Kareri Lake, Himachal Pradesh</span>
                 </div>
                 <div class="header-right">
+                    <div class="clock-indicator" id="clock-indicator" title="Region time">
+                        <span class="clock-label">IST</span>
+                        <span class="clock-time mono" id="clock-time">--:--:--</span>
+                    </div>
                     <div class="sync-indicator" id="sync-indicator">
                         <span class="sync-dot"></span>
                         <span class="sync-text" id="sync-text">synced</span>
@@ -94,6 +100,7 @@
         <!-- Tabs -->
         <nav class="tabs" id="main-tabs">
             <button class="tab active" data-view="v-home" id="tab-home">Basecamp</button>
+            <button class="tab" data-view="v-weather" id="tab-weather">Weather</button>
             <button class="tab" data-view="v-add" id="tab-add">Add Expense</button>
             <button class="tab" data-view="v-ledger" id="tab-ledger">Ledger</button>
             <button class="tab" data-view="v-settle" id="tab-settle">Settle Up</button>
@@ -156,6 +163,25 @@
                 <div class="activity-rows" id="recent-rows">
                     <!-- Populated by JS -->
                 </div>
+            </div>
+        </section>
+
+        <!-- ====== VIEW: LEDGER ====== -->
+        <section class="view" id="v-weather">
+            <div class="card">
+                <div class="card-header-row weather-header-row">
+                    <div class="weather-header-copy">
+                        <h3>Regional Weather</h3>
+                        <p class="card-subtitle" id="weather-meta">Shared forecast cache for Dharamshala, Kareri Village, and Kareri Lake.</p>
+                    </div>
+                    <div class="weather-theme-badge" id="weather-theme-badge">Loading...</div>
+                </div>
+                <div class="weather-overview-grid" id="weather-overview-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="weather-location-grid" id="weather-location-grid">
+                <!-- Populated by JS -->
             </div>
         </section>
 
